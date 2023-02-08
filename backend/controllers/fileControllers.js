@@ -1,4 +1,5 @@
 const fs = require('fs');
+const path = require('path')
 const File = require('../model/fileModel');
 const Word = require('../model/wordModel');
 
@@ -6,7 +7,6 @@ const Word = require('../model/wordModel');
 //@route /file
 const fileUpload = (async (req, res, next) => {
   try {
-    // console.log(req.file)
 
     const fileExists = await File.findOne({ fileName: req.file.originalname });
     if (fileExists) {
@@ -53,21 +53,21 @@ const getFiles = (async (req, res, next) => {
     const term = req.query.q;
     const docIDs = await Word.find({
       word: {
-        $regex: new RegExp(term ,'i')
+        $regex: new RegExp(term, 'i')
       }
     }).distinct('documentId');
 
     const files = await File.find({
       _id: {
-        $in: docIDs 
+        $in: docIDs
       }
     })
-    
+
 
     res.status(200).json({
       data: files
     })
-    
+
   } catch (error) {
     console.log(error)
     next(error)
@@ -80,7 +80,6 @@ const getFiles = (async (req, res, next) => {
 const getAllFiles = (async (req, res, next) => {
   try {
     const files = await File.find({});
-    console.log(files)
     res.status(200).json({
       data: files
     })
@@ -91,8 +90,28 @@ const getAllFiles = (async (req, res, next) => {
 })
 
 
+//@desc Download a file
+//@route /download/:id
+const downloadFile = (async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const doc = await File.findById(id);
+    const file = path.join(__dirname, '../public/files/', `${doc.fileLoc}`);
+    res.setHeader('Content-Type', 'application/octet-stream');
+    res.setHeader('Content-Disposition', `attachment; filename=file.docx`);
+    res.status(200);
+    res.sendFile(file)
+  } catch (error) {
+    console.log(error)
+    next(error)
+  }
+})
+
+
+
 module.exports = {
   fileUpload,
   getFiles,
   getAllFiles,
+  downloadFile,
 }

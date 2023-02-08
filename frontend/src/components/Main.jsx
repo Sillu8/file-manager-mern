@@ -1,5 +1,5 @@
 import styled from '@emotion/styled';
-import { Box, Button, Container, Grid, Modal, Paper, Stack, TextField, Typography } from '@mui/material'
+import { Box, Button, Container, Dialog, DialogActions, DialogContent, DialogContentText, Grid, Modal, Paper, Stack, TextField, Typography } from '@mui/material'
 import React, { useEffect, useState } from 'react'
 import { API } from '../axios';
 import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
@@ -24,17 +24,27 @@ const Item = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(1),
   textAlign: 'center',
   color: theme.palette.text.secondary,
+  cursor: 'pointer',
+  height: '100px',
+  width: '100px',
 }));
 
 
 const Main = () => {
 
-  const [files, setFiles] = useState([]);
   const [open, setOpen] = useState(false);
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
+
   const [file, setFile] = useState(null);
+  const [files, setFiles] = useState([]);
   const [searchData, setSearchData] = useState([]);
+
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const handleDialogOpen = () => setDialogOpen(true);
+  const handleDialogClose = () => setDialogOpen(false);
+
+  const [clickedItem, setClickedItem] = useState('')
 
   const fileChange = (event) => {
     const file = event.target.files[0];
@@ -62,6 +72,32 @@ const Main = () => {
     } catch (error) {
       console.log(error);
     }
+  }
+
+  const downloadFile = async () => {
+    try {
+      const response = await API.get(
+        `file/download/${clickedItem}`,
+        { responseType: "blob" }
+      );
+      const href = URL.createObjectURL(response.data);
+      const link = document.createElement("a");
+      link.href = href;
+      link.setAttribute(
+        "download",
+        `${clickedItem}.docx`
+      );
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(href);
+    } catch (error) {
+      console.error(error);
+    } 
+  };
+
+  const handleClick = (id) => {
+    setClickedItem(id)
   }
 
   useEffect(() => {
@@ -97,7 +133,7 @@ const Main = () => {
       </Modal>
 
       <Typography variant="h3" component="h2" color={'blueviolet'} textAlign='center' marginTop>
-        Files
+        {searchData?.length < 1 ? 'Files' : 'Search Results'}
       </Typography>
 
       {
@@ -116,11 +152,11 @@ const Main = () => {
                 return (
                   <Item
                     key={file?._id}
-                    sx={{
-                      cursor: 'pointer',
-                      height: '100px',
-                      width: '100px',
-                    }}>
+                    onClick={() => {
+                      handleDialogOpen();
+                      handleClick(file?._id);
+                    }}
+                  >
                     <InsertDriveFileIcon fontSize='large' />
                     <p>{file?.fileName}</p>
                   </Item>
@@ -131,11 +167,11 @@ const Main = () => {
                 return (
                   <Item
                     key={file?._id}
-                    sx={{
-                      cursor: 'pointer',
-                      height: '100px',
-                      width: '100px',
-                    }}>
+                    onClick={() => {
+                      handleDialogOpen();
+                      handleClick(file?._id);
+                    }}
+                  >
                     <InsertDriveFileIcon fontSize='large' />
                     <p>{file?.fileName}</p>
                   </Item>
@@ -143,8 +179,31 @@ const Main = () => {
               })
           }
         </Stack>
-
       }
+
+      <Dialog
+        open={dialogOpen}
+        onClose={handleDialogClose}
+        aria-labelledby="alert-dialog-title"
+        aria-describedby="alert-dialog-description"
+      >
+        <DialogContent>
+          <DialogContentText id="alert-dialog-description">
+            Do you want to download this form?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleDialogClose}>No</Button>
+          <Button
+            onClick={async () => {
+              await downloadFile();
+              handleDialogClose();
+            }}
+            autoFocus>
+            Yes
+          </Button>
+        </DialogActions>
+      </Dialog>
 
     </Container>
   )

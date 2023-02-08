@@ -1,8 +1,6 @@
-import React, { useEffect } from 'react'
-import { AppBar, Autocomplete, CssBaseline, TextField, Toolbar, Typography } from '@mui/material'
-import { API } from '../axios'
-import { useState } from 'react'
-import SearchBar from './SearchBar'
+import React from 'react'
+import { AppBar, Toolbar, Typography } from '@mui/material'
+
 
 const Header = () => {
 
@@ -10,7 +8,6 @@ const Header = () => {
 
   return (
     <>
-      <CssBaseline />
       <AppBar
         position="static"
         color="default"
