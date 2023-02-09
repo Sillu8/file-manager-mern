@@ -1,10 +1,11 @@
 import styled from '@emotion/styled';
 import { Box, Button, Container, Dialog, DialogActions, DialogContent, DialogContentText, Grid, Modal, Paper, Stack, TextField, Typography } from '@mui/material'
-import React, { useEffect, useState } from 'react'
+import React, { useContext, useEffect, useState } from 'react'
 import { API } from '../axios';
 import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
 import toast from 'react-hot-toast'
 import SearchBar from './SearchBar';
+import { LoadContext } from '../context/LoadContext';
 
 const style = {
   position: 'absolute',
@@ -32,6 +33,8 @@ const Item = styled(Paper)(({ theme }) => ({
 
 const Main = () => {
 
+  const { showLoading, hideLoading } = useContext(LoadContext);
+
   const [open, setOpen] = useState(false);
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
@@ -56,26 +59,33 @@ const Main = () => {
     data.append('file', file);
     try {
       handleClose();
+      showLoading();
       const res = await API.post('/file', data)
       setFiles(res.data.data)
       toast.success('Successfully added a file.')
     } catch (error) {
       console.log(error);
       toast.error(error.response.data.message)
+    } finally {
+      hideLoading()
     }
   }
 
   const fetchFiles = async () => {
     try {
+      showLoading();
       const res = await API.get('/file/all');
       setFiles(res.data.data);
     } catch (error) {
       console.log(error);
+    } finally {
+      hideLoading()
     }
   }
 
   const downloadFile = async () => {
     try {
+      
       const response = await API.get(
         `file/download/${clickedItem}`,
         { responseType: "blob" }
@@ -93,7 +103,7 @@ const Main = () => {
       URL.revokeObjectURL(href);
     } catch (error) {
       console.error(error);
-    } 
+    }
   };
 
   const handleClick = (id) => {
